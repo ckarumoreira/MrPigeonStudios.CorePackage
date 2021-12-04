@@ -29,5 +29,21 @@ namespace MrPigeonStudios.Core.Utility.Tests {
             Assert.Equal(2, newObject.Get("PropertyTwo").AsDouble);
             Assert.Equal(3, newObject.Get("PropertyThree").AsDouble);
         }
+
+        [Fact]
+        public void DObjectGenerator_NoPropertyWithSpecifiedName() {
+            DMetadata metadata = new() {
+                Id = Guid.NewGuid(),
+                MappedProperties = new List<DMappedProperty>() {
+                    DMappedProperty.Create("PropertyOne"),
+                }
+            };
+            var type = DObjectGenerator.GenerateType(metadata);
+            var newObject = DObjectGenerator.CreateInstance(type, metadata);
+
+            newObject.Set("MissingProperty", 1);
+
+            Assert.Null(newObject.Get("MissingProperty").AsObject);
+        }
     }
 }

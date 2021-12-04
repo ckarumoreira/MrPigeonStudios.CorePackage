@@ -21,11 +21,13 @@ namespace MrPigeonStudios.Core.Utility.DynamicObjects.TypeResolvers {
                 return date;
             }
 
-            return null;
+            return NullProperty.Instance;
         }
 
         public string Resolve(DynamicProperty source) {
-            return source.IsDateTime ? source.AsDateTime.ToString(_format, _formatProvider) : null;
+            if (source.IsDateTime)
+                return source.AsDateTime.ToString(_format, _formatProvider);
+            return null;
         }
     }
 }

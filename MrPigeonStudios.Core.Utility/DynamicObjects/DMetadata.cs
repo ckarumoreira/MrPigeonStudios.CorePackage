@@ -22,7 +22,7 @@ namespace MrPigeonStudios.Core.Utility.DynamicObjects {
         public DynamicProperty Get(DObject instance, string propertyName) {
             var index = Array.IndexOf(PropertyNames, propertyName);
             if (index < 0)
-                return null;
+                return NullProperty.Instance;
             return Properties[index].GetValueExpression(instance);
         }
 

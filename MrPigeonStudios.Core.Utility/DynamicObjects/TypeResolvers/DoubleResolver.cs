@@ -6,10 +6,15 @@ namespace MrPigeonStudios.Core.Utility.DynamicObjects.TypeResolvers {
 
     public class DoubleResolver : ITypeResolver {
         private readonly string _decimalSeparator;
+        private readonly string _format;
         private readonly IFormatProvider _formatProvider;
         private readonly string _thousandSeparator;
 
-        public DoubleResolver(string decimalSeparator, string thousandSeparator) {
+        public DoubleResolver(string format, string decimalSeparator, string thousandSeparator) {
+            if (string.IsNullOrEmpty(format))
+                throw new ArgumentNullException(nameof(format));
+            _format = format;
+
             if (string.IsNullOrEmpty(decimalSeparator))
                 throw new ArgumentNullException(nameof(decimalSeparator));
             _decimalSeparator = decimalSeparator;
@@ -21,6 +26,9 @@ namespace MrPigeonStudios.Core.Utility.DynamicObjects.TypeResolvers {
             var culture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
             culture.NumberFormat.NumberDecimalSeparator = _decimalSeparator;
             culture.NumberFormat.NumberGroupSeparator = _thousandSeparator;
+            culture.NumberFormat.CurrencyDecimalSeparator = _decimalSeparator;
+            culture.NumberFormat.CurrencyGroupSeparator = _thousandSeparator;
+
             _formatProvider = culture;
         }
 
@@ -29,11 +37,13 @@ namespace MrPigeonStudios.Core.Utility.DynamicObjects.TypeResolvers {
                 return number;
             }
 
-            return null;
+            return NullProperty.Instance;
         }
 
         public string Resolve(DynamicProperty source) {
-            return source.IsDouble ? source.AsDouble.ToString(_formatProvider) : null;
+            if (source.IsDouble)
+                return source.AsDouble.ToString(_format, _formatProvider);
+            return null;
         }
     }
 }
