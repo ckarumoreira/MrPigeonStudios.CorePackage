@@ -26,41 +26,19 @@ namespace MrPigeonStudios.Core.Utility.Interpreters.QueryBased {
             var context = new ExpressionContext<TIn, TOut>();
             var operationQueue = GetOperationQueue<TIn>(textExpression);
 
-            var reversePolishQueue = GetReversePolishQueue<TIn>(operationQueue);
+            var reversePolishNotation = GetReversePolishNotation<TIn>(operationQueue);
 
             Stack<IExpressionPart> stack = new();
 
-            while (reversePolishQueue.Count > 0) {
-                var part = reversePolishQueue.Dequeue();
-                if (part is IExpressionOperator) {
-                    if (part is UnaryExpressionOperator unary) {
-                        var operandA = stack.Pop() as IExpressionValue<TIn>;
-
-                        stack.Push(new UnaryExpressionPlan<TIn> {
-                            Operator = unary,
-                            Value = operandA
-                        });
-                    } else if (part is BinaryExpressionOperator binary) {
-                        var operandA = stack.Pop() as IExpressionValue<TIn>;
-                        var operandB = stack.Pop() as IExpressionValue<TIn>;
-
-                        stack.Push(new BinaryExpressionPlan<TIn> {
-                            Operator = binary,
-                            LeftValue = operandB,
-                            RightValue = operandA
-                        });
-                    } else if (part is TernaryExpressionOperator ternary) {
-                        var operandA = stack.Pop() as IExpressionValue<TIn>;
-                        var operandB = stack.Pop() as IExpressionValue<TIn>;
-                        var operandC = stack.Pop() as IExpressionValue<TIn>;
-
-                        stack.Push(new TernaryExpressionPlan<TIn> {
-                            Operator = ternary,
-                            FirstValue = operandC,
-                            SecondValue = operandB,
-                            ThirdValue = operandA
-                        });
-                    }
+            while (reversePolishNotation.Count > 0) {
+                var part = reversePolishNotation.Dequeue();
+                if (part is IExpressionOperator @operator) {
+                    stack.Push(@operator switch {
+                        UnaryExpressionOperator unary => ValidateUnaryOperator<TIn>(unary, stack.Pop()),
+                        BinaryExpressionOperator binary => ValidateBinaryOperator<TIn>(binary, stack.Pop(), stack.Pop()),
+                        TernaryExpressionOperator ternary => ValidateTernaryOperator<TIn>(ternary, stack.Pop(), stack.Pop(), stack.Pop()),
+                        _ => throw new InvalidOperationException($"Operators of type '{@operator}' are currently unsupported.")
+                    });
                 } else {
                     stack.Push(part);
                 }
@@ -170,7 +148,7 @@ namespace MrPigeonStudios.Core.Utility.Interpreters.QueryBased {
             return parts;
         }
 
-        private Queue<IExpressionPart> GetReversePolishQueue<TIn>(Queue<IInterpreterData> operationQueue) {
+        private Queue<IExpressionPart> GetReversePolishNotation<TIn>(Queue<IInterpreterData> operationQueue) {
             Stack<IInterpreterData> stack = new();
             Queue<IInterpreterData> formula = new();
 
@@ -235,6 +213,14 @@ namespace MrPigeonStudios.Core.Utility.Interpreters.QueryBased {
             return new PropertyExpressionValue<TIn>(expressionPart);
         }
 
+        private IExpressionPart ValidateBinaryOperator<TIn>(BinaryExpressionOperator @operator, IExpressionPart operandB, IExpressionPart operandA) {
+            return new BinaryExpressionPlan<TIn> {
+                Operator = @operator,
+                LeftValue = operandA as IExpressionValue<TIn>,
+                RightValue = operandB as IExpressionValue<TIn>
+            };
+        }
+
         private IExpressionOperator ValidateOperation<TIn>(string expressionPart) {
             return expressionPart switch {
                 "!" => UnaryExpressionOperator.Not,
@@ -253,6 +239,22 @@ namespace MrPigeonStudios.Core.Utility.Interpreters.QueryBased {
                 "IIF" => TernaryExpressionOperator.Condition,
                 // "SUM" => LinqExpressionOperator.Sum,
                 _ => null
+            };
+        }
+
+        private IExpressionPart ValidateTernaryOperator<TIn>(TernaryExpressionOperator @operator, IExpressionPart operandC, IExpressionPart operandB, IExpressionPart operandA) {
+            return new TernaryExpressionPlan<TIn> {
+                Operator = @operator,
+                FirstValue = operandA as IExpressionValue<TIn>,
+                SecondValue = operandB as IExpressionValue<TIn>,
+                ThirdValue = operandC as IExpressionValue<TIn>
+            };
+        }
+
+        private IExpressionPart ValidateUnaryOperator<TIn>(UnaryExpressionOperator @operator, IExpressionPart operand) {
+            return new UnaryExpressionPlan<TIn> {
+                Operator = @operator,
+                Value = operand as IExpressionValue<TIn>
             };
         }
 
