@@ -8,5 +8,9 @@ namespace MrPigeonStudios.Core.Utility.Expressions.Operators {
 
         public string Keyword { get; init; }
         public Func<Expression, Expression, Expression, Expression> Operation { get; init; }
+        
+        public override string ToString() {
+            return Keyword;
+        }
     }
 }

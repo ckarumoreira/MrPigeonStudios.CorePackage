@@ -4,11 +4,11 @@ using System.Linq.Expressions;
 namespace MrPigeonStudios.Core.Utility.Expressions {
 
     public sealed class ExpressionContext<T, TOut> {
-        public IExpressionPlan<T> Plan { get; set; }
+        public IExpressionValue<T> Value { get; set; }
 
         public Func<T, TOut> Compile() {
             var source = Expression.Parameter(typeof(T), "source");
-            var expression = Expression.Lambda<Func<T, TOut>>(Plan.Compile(source), source);
+            var expression = Expression.Lambda<Func<T, TOut>>(Value.Compile(source), source);
             return expression.Compile();
         }
     }

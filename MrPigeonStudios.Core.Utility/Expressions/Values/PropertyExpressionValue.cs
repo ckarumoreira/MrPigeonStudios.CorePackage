@@ -23,5 +23,9 @@ namespace MrPigeonStudios.Core.Utility.Expressions.Values {
 
             return _value;
         }
+
+        public override string ToString() {
+            return accessor;
+        }
     }
 }

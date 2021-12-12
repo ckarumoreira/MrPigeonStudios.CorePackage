@@ -1,7 +1,7 @@
 using MrPigeonStudios.Core.Utility.Expressions;
 using MrPigeonStudios.Core.Utility.Expressions.Exceptions;
 using MrPigeonStudios.Core.Utility.Expressions.Operators;
-using MrPigeonStudios.Core.Utility.Expressions.Rules;
+using MrPigeonStudios.Core.Utility.Expressions.Plans;
 using MrPigeonStudios.Core.Utility.Expressions.Values;
 using Xunit;
 
@@ -22,7 +22,7 @@ namespace MrPigeonStudios.Core.Utility.Tests {
             var dummy = new Dummy() { };
 
             var context = new ExpressionContext<Dummy, int> {
-                Plan = new BinaryExpressionPlan<Dummy>() {
+                Value = new BinaryExpressionPlan<Dummy>() {
                     LeftValue = new ConstantExpressionValue<Dummy>(valueA),
                     RightValue = new ConstantExpressionValue<Dummy>(valueB),
                     Operator = BinaryExpressionOperator.Add
@@ -65,7 +65,7 @@ namespace MrPigeonStudios.Core.Utility.Tests {
             var dummy = new Dummy() { };
 
             var context = new ExpressionContext<Dummy, double> {
-                Plan = new BinaryExpressionPlan<Dummy>() {
+                Value = new BinaryExpressionPlan<Dummy>() {
                     LeftValue = new ConstantExpressionValue<Dummy>(valueA),
                     RightValue = new ConstantExpressionValue<Dummy>(valueB),
                     Operator = BinaryExpressionOperator.Divide
@@ -234,7 +234,7 @@ namespace MrPigeonStudios.Core.Utility.Tests {
         [Fact]
         public void FilterContext_BinaryFilterWithNonBinaryOperator() {
             var context = new ExpressionContext<Dummy, bool> {
-                Plan = new BinaryExpressionPlan<Dummy>() {
+                Value = new BinaryExpressionPlan<Dummy>() {
                     LeftValue = new PropertyExpressionValue<Dummy>("Integer"),
                     RightValue = new PropertyExpressionValue<Dummy>("Integer"),
                     Operator = TernaryExpressionOperator.Condition
@@ -258,7 +258,7 @@ namespace MrPigeonStudios.Core.Utility.Tests {
             };
 
             var context = new ExpressionContext<Dummy, bool> {
-                Plan = new BinaryExpressionPlan<Dummy> {
+                Value = new BinaryExpressionPlan<Dummy> {
                     LeftValue = new PropertyExpressionValue<Dummy>("Integer"),
                     RightValue = new PropertyExpressionValue<Dummy>("Object.Integer"),
                     Operator = BinaryExpressionOperator.Equal
@@ -279,7 +279,7 @@ namespace MrPigeonStudios.Core.Utility.Tests {
             var dummy = new Dummy() { Integer = sourceValue };
 
             var context = new ExpressionContext<Dummy, bool> {
-                Plan = new BinaryExpressionPlan<Dummy>() {
+                Value = new BinaryExpressionPlan<Dummy>() {
                     LeftValue = new PropertyExpressionValue<Dummy>("Integer"),
                     RightValue = new ConstantExpressionValue<Dummy>(comparedValue),
                     Operator = BinaryExpressionOperator.Equal
@@ -306,7 +306,7 @@ namespace MrPigeonStudios.Core.Utility.Tests {
             };
 
             var context = new ExpressionContext<Dummy, object> {
-                Plan = new TernaryExpressionPlan<Dummy>() {
+                Value = new TernaryExpressionPlan<Dummy>() {
                     FirstValue = new ConstantExpressionValue<Dummy>(condition),
                     SecondValue = new PropertyExpressionValue<Dummy>("Integer"),
                     ThirdValue = new PropertyExpressionValue<Dummy>("Object.Integer"),
@@ -324,7 +324,7 @@ namespace MrPigeonStudios.Core.Utility.Tests {
         [Fact]
         public void FilterContext_TernaryFilterWithNonBinaryOperator() {
             var context = new ExpressionContext<Dummy, bool> {
-                Plan = new TernaryExpressionPlan<Dummy>() {
+                Value = new TernaryExpressionPlan<Dummy>() {
                     FirstValue = new PropertyExpressionValue<Dummy>("Integer"),
                     SecondValue = new PropertyExpressionValue<Dummy>("Integer"),
                     ThirdValue = new PropertyExpressionValue<Dummy>("Integer"),
@@ -344,7 +344,7 @@ namespace MrPigeonStudios.Core.Utility.Tests {
             var dummy = new Dummy { Boolean = source };
 
             var context = new ExpressionContext<Dummy, bool> {
-                Plan = new UnaryExpressionPlan<Dummy> {
+                Value = new UnaryExpressionPlan<Dummy> {
                     Value = new PropertyExpressionValue<Dummy>("Boolean"),
                     Operator = UnaryExpressionOperator.Not
                 }
@@ -360,7 +360,7 @@ namespace MrPigeonStudios.Core.Utility.Tests {
         [Fact]
         public void FilterContext_UnaryFilterWithNonBinaryOperator() {
             var context = new ExpressionContext<Dummy, bool> {
-                Plan = new UnaryExpressionPlan<Dummy>() {
+                Value = new UnaryExpressionPlan<Dummy>() {
                     Value = new PropertyExpressionValue<Dummy>("Integer"),
                     Operator = TernaryExpressionOperator.Condition
                 }

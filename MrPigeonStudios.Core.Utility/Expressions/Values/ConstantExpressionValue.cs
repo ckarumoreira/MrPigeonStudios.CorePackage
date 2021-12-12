@@ -10,5 +10,9 @@ namespace MrPigeonStudios.Core.Utility.Expressions.Values {
         }
 
         public Expression Compile(Expression origin) => _value;
+
+        public override string ToString() {
+            return _value.ToString();
+        }
     }
 }

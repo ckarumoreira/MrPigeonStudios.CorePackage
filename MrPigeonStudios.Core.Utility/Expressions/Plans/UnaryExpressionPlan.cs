@@ -2,7 +2,7 @@
 using MrPigeonStudios.Core.Utility.Expressions.Exceptions;
 using MrPigeonStudios.Core.Utility.Expressions.Operators;
 
-namespace MrPigeonStudios.Core.Utility.Expressions.Rules {
+namespace MrPigeonStudios.Core.Utility.Expressions.Plans {
 
     public class UnaryExpressionPlan<T> : IExpressionPlan<T> {
         public IExpressionOperator Operator { get; set; }
@@ -16,6 +16,10 @@ namespace MrPigeonStudios.Core.Utility.Expressions.Rules {
             }
 
             return unaryOperator.Operation(value);
+        }
+
+        public override string ToString() {
+            return $"{Operator} {Value}";
         }
     }
 }

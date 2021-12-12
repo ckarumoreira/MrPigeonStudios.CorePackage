@@ -2,7 +2,7 @@
 using MrPigeonStudios.Core.Utility.Expressions.Exceptions;
 using MrPigeonStudios.Core.Utility.Expressions.Operators;
 
-namespace MrPigeonStudios.Core.Utility.Expressions.Rules {
+namespace MrPigeonStudios.Core.Utility.Expressions.Plans {
 
     public class TernaryExpressionPlan<T> : IExpressionPlan<T> {
         public IExpressionValue<T> FirstValue { get; set; }
@@ -20,6 +20,10 @@ namespace MrPigeonStudios.Core.Utility.Expressions.Rules {
             }
 
             return ternaryOperator.Operation(first, second, third);
+        }
+
+        public override string ToString() {
+            return $"{Operator} {FirstValue} {SecondValue} {ThirdValue}";
         }
     }
 }

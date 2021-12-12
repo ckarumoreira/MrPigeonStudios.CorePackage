@@ -1,6 +1,6 @@
 ﻿namespace MrPigeonStudios.Core.Utility.Expressions {
 
-    public interface IExpressionOperator {
+    public interface IExpressionOperator : IExpressionPart {
         string Keyword { get; }
     }
 }

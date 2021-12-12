@@ -2,7 +2,7 @@
 using MrPigeonStudios.Core.Utility.Expressions.Exceptions;
 using MrPigeonStudios.Core.Utility.Expressions.Operators;
 
-namespace MrPigeonStudios.Core.Utility.Expressions.Rules {
+namespace MrPigeonStudios.Core.Utility.Expressions.Plans {
 
     public class BinaryExpressionPlan<T> : IExpressionPlan<T> {
         public IExpressionValue<T> LeftValue { get; set; }
@@ -18,6 +18,10 @@ namespace MrPigeonStudios.Core.Utility.Expressions.Rules {
             }
 
             return binaryOperator.Operation(left, right);
+        }
+
+        public override string ToString() {
+            return $"{LeftValue} {Operator} {RightValue}";
         }
     }
 }
