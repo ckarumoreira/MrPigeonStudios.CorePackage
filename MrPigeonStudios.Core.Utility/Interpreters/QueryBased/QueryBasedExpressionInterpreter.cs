@@ -23,33 +23,94 @@ namespace MrPigeonStudios.Core.Utility.Interpreters.QueryBased {
         /// <param name="textExpression"></param>
         /// <returns></returns>
         public override ExpressionContext<TIn, TOut> GenerateContext<TIn, TOut>(string textExpression) {
-            var context = new ExpressionContext<TIn, TOut>();
-            var operationQueue = GetOperationQueue<TIn>(textExpression);
+            var operationQueue = ParseToInterpreterData<TIn>(textExpression);
 
             var reversePolishNotation = GetReversePolishNotation<TIn>(operationQueue);
 
-            Stack<IExpressionPart> stack = new();
+            return new ExpressionContext<TIn, TOut>() {
+                Value = RunReversePolishNotation<TIn>(reversePolishNotation)
+            };
+        }
 
-            while (reversePolishNotation.Count > 0) {
-                var part = reversePolishNotation.Dequeue();
-                if (part is IExpressionOperator @operator) {
-                    stack.Push(@operator switch {
-                        UnaryExpressionOperator unary => ValidateUnaryOperator<TIn>(unary, stack.Pop()),
-                        BinaryExpressionOperator binary => ValidateBinaryOperator<TIn>(binary, stack.Pop(), stack.Pop()),
-                        TernaryExpressionOperator ternary => ValidateTernaryOperator<TIn>(ternary, stack.Pop(), stack.Pop(), stack.Pop()),
-                        _ => throw new InvalidOperationException($"Operators of type '{@operator}' are currently unsupported.")
-                    });
+        private IExpressionPart CreateBinaryPlan<TIn>(BinaryExpressionOperator @operator, IExpressionPart operandB, IExpressionPart operandA) {
+            return new BinaryExpressionPlan<TIn> {
+                Operator = @operator,
+                LeftValue = operandA as IExpressionValue<TIn>,
+                RightValue = operandB as IExpressionValue<TIn>
+            };
+        }
+
+        private IExpressionPart CreateTernaryPlan<TIn>(TernaryExpressionOperator @operator, IExpressionPart operandC, IExpressionPart operandB, IExpressionPart operandA) {
+            return new TernaryExpressionPlan<TIn> {
+                Operator = @operator,
+                FirstValue = operandA as IExpressionValue<TIn>,
+                SecondValue = operandB as IExpressionValue<TIn>,
+                ThirdValue = operandC as IExpressionValue<TIn>
+            };
+        }
+
+        private IExpressionPart CreateUnaryPlan<TIn>(UnaryExpressionOperator @operator, IExpressionPart operand) {
+            return new UnaryExpressionPlan<TIn> {
+                Operator = @operator,
+                Value = operand as IExpressionValue<TIn>
+            };
+        }
+
+        private IExpressionPart GetFromData(IInterpreterData data) {
+            if (data is InterpreterPart part) {
+                return part.Value;
+            }
+            throw new InvalidOperationException($"Can't get expression from '{data}' type.");
+        }
+
+        private Queue<IExpressionPart> GetReversePolishNotation<TIn>(Queue<IInterpreterData> operationQueue) {
+            Stack<IInterpreterData> operationStack = new();
+            Queue<IExpressionPart> formula = new();
+
+            while (operationQueue.Count > 0) {
+                var current = operationQueue.Dequeue();
+                if (IsDelimiter(current, true)) {
+                    operationStack.Push(current);
+                } else if (IsDelimiter(current, false)) {
+                    while (operationStack.Count > 0 && !IsDelimiter(operationStack.Peek(), true)) {
+                        formula.Enqueue(GetFromData(operationStack.Pop()));
+                    }
+                    operationStack.Pop();
+                } else if (IsOperandus<TIn>(current)) {
+                    formula.Enqueue(GetFromData(current));
+                } else if (IsOperator(current)) {
+                    while (operationStack.Count > 0 && !IsDelimiter(operationStack.Peek(), true)/* && Prior(x) <= Prior(stack.Peek())*/) {
+                        formula.Enqueue(GetFromData(operationStack.Pop()));
+                    }
+                    operationStack.Push(current);
                 } else {
-                    stack.Push(part);
+                    var y = operationStack.Pop();
+                    if (!IsDelimiter(y, true)) {
+                        formula.Enqueue(GetFromData(y));
+                    }
                 }
             }
 
-            context.Value = stack.Pop() as IExpressionValue<TIn>;
+            while (operationStack.Count > 0) {
+                formula.Enqueue(GetFromData(operationStack.Pop()));
+            }
 
-            return context;
+            return formula;
         }
 
-        private Queue<IInterpreterData> GetOperationQueue<TIn>(string textExpression) {
+        private bool IsDelimiter(IInterpreterData data, bool isOpen) {
+            return data is InterpreterDelimiter delimiter && delimiter.State == isOpen;
+        }
+
+        private bool IsOperandus<TIn>(IInterpreterData data) {
+            return data is InterpreterPart part && part.Value is IExpressionValue<TIn>;
+        }
+
+        private bool IsOperator(IInterpreterData data) {
+            return data is InterpreterPart part && part.Value is IExpressionOperator;
+        }
+
+        private Queue<IInterpreterData> ParseToInterpreterData<TIn>(string textExpression) {
             Stack<string> accumulated = new();
             Queue<IInterpreterData> parts = new();
 
@@ -148,77 +209,28 @@ namespace MrPigeonStudios.Core.Utility.Interpreters.QueryBased {
             return parts;
         }
 
-        private Queue<IExpressionPart> GetReversePolishNotation<TIn>(Queue<IInterpreterData> operationQueue) {
-            Stack<IInterpreterData> stack = new();
-            Queue<IInterpreterData> formula = new();
+        private IExpressionValue<TIn> RunReversePolishNotation<TIn>(Queue<IExpressionPart> parts) {
+            Stack<IExpressionPart> stack = new();
 
-            while (operationQueue.Count > 0) {
-                var current = operationQueue.Dequeue();
-                if (IsDelimiter(current, true)) {
-                    stack.Push(current);
-                } else if (IsDelimiter(current, false)) {
-                    while (stack.Count > 0 && !IsDelimiter(stack.Peek(), true)) {
-                        formula.Enqueue(stack.Pop());
-                    }
-                    stack.Pop();
-                } else if (IsOperandus<TIn>(current)) {
-                    formula.Enqueue(current);
-                } else if (IsOperator(current)) {
-                    while (stack.Count > 0 && !IsDelimiter(stack.Peek(), true)/* && Prior(x) <= Prior(stack.Peek())*/) {
-                        formula.Enqueue(stack.Pop());
-                    }
-                    stack.Push(current);
+            while (parts.Count > 0) {
+                var part = parts.Dequeue();
+                if (part is IExpressionOperator @operator) {
+                    stack.Push(@operator switch {
+                        UnaryExpressionOperator unary => CreateUnaryPlan<TIn>(unary, stack.Pop()),
+                        BinaryExpressionOperator binary => CreateBinaryPlan<TIn>(binary, stack.Pop(), stack.Pop()),
+                        TernaryExpressionOperator ternary => CreateTernaryPlan<TIn>(ternary, stack.Pop(), stack.Pop(), stack.Pop()),
+                        _ => throw new InvalidOperationException($"Operators of type '{@operator}' are currently unsupported.")
+                    });
                 } else {
-                    var y = stack.Pop();
-                    if (!IsDelimiter(y, true)) {
-                        formula.Enqueue(y);
-                    }
+                    stack.Push(part);
                 }
             }
 
-            while (stack.Count > 0) {
-                formula.Enqueue(stack.Pop());
-            }
-
-            Queue<IExpressionPart> parts = new();
-
-            while (formula.Count > 0) {
-                if (formula.Dequeue() is InterpreterPart part) {
-                    parts.Enqueue(part.Value);
-                }
-            }
-
-            return parts;
-        }
-
-        private bool IsDelimiter(IInterpreterData data, bool isOpen) {
-            if (data is InterpreterDelimiter delimiter)
-                return delimiter.State == isOpen;
-            return false;
-        }
-
-        private bool IsOperandus<TIn>(IInterpreterData data) {
-            if (data is InterpreterPart part)
-                return part.Value is IExpressionValue<TIn>;
-            return false;
-        }
-
-        private bool IsOperator(IInterpreterData data) {
-            if (data is InterpreterPart part)
-                return part.Value is IExpressionOperator;
-            return false;
+            return stack.Pop() as IExpressionValue<TIn>;
         }
 
         private IExpressionValue<TIn> ValidateAttribute<TIn>(string expressionPart) {
             return new PropertyExpressionValue<TIn>(expressionPart);
-        }
-
-        private IExpressionPart ValidateBinaryOperator<TIn>(BinaryExpressionOperator @operator, IExpressionPart operandB, IExpressionPart operandA) {
-            return new BinaryExpressionPlan<TIn> {
-                Operator = @operator,
-                LeftValue = operandA as IExpressionValue<TIn>,
-                RightValue = operandB as IExpressionValue<TIn>
-            };
         }
 
         private IExpressionOperator ValidateOperation<TIn>(string expressionPart) {
@@ -239,22 +251,6 @@ namespace MrPigeonStudios.Core.Utility.Interpreters.QueryBased {
                 "IIF" => TernaryExpressionOperator.Condition,
                 // "SUM" => LinqExpressionOperator.Sum,
                 _ => null
-            };
-        }
-
-        private IExpressionPart ValidateTernaryOperator<TIn>(TernaryExpressionOperator @operator, IExpressionPart operandC, IExpressionPart operandB, IExpressionPart operandA) {
-            return new TernaryExpressionPlan<TIn> {
-                Operator = @operator,
-                FirstValue = operandA as IExpressionValue<TIn>,
-                SecondValue = operandB as IExpressionValue<TIn>,
-                ThirdValue = operandC as IExpressionValue<TIn>
-            };
-        }
-
-        private IExpressionPart ValidateUnaryOperator<TIn>(UnaryExpressionOperator @operator, IExpressionPart operand) {
-            return new UnaryExpressionPlan<TIn> {
-                Operator = @operator,
-                Value = operand as IExpressionValue<TIn>
             };
         }
 
