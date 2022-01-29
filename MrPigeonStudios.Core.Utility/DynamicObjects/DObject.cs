@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using MrPigeonStudios.Core.Utility.DynamicProperties;
+﻿using MrPigeonStudios.Core.Utility.DynamicProperties;
 
 namespace MrPigeonStudios.Core.Utility.DynamicObjects {
 
@@ -11,7 +10,7 @@ namespace MrPigeonStudios.Core.Utility.DynamicObjects {
         }
 
         public DynamicProperty Get(string propertyName) {
-            return _metadata.Get(this, propertyName);
+            return _metadata?.Get(this, propertyName);
         }
 
         public void Set(string propertyName, object value) {
